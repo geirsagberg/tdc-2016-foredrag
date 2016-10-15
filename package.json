@@ -5,6 +5,7 @@
   "author": "Geir Sagberg",
   "license": "MIT",
   "dependencies": {
+    "mermaid": "^6.0.0",
     "remark-bekk": "bekk/remark"
   },
   "devDependencies": {

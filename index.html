@@ -32,9 +32,20 @@ class: agenda
 
 ---
 
-class: middle center
+class: center
 
 # Introduksjon
+
+## Stuff
+
+.mermaid[graph TB
+  App-->WishList
+  WishList-->wish1[Wish 1]
+  WishList-->wish2[Wish 2]
+  App-->Chat
+  Chat-->message1[Message 1]
+  Chat-->message2[Message 2]
+  ]
 
   </textarea>
   <script src="node_modules/remark-bekk/vendor/remark.min.js" type="text/javascript"></script>
@@ -44,5 +55,14 @@ class: middle center
       highlightStyle: 'monokai'
     });
   </script>
+  <script src="node_modules/mermaid/dist/mermaid.min.js"></script>
+  <link type="text/css" rel="stylesheet" href="node_modules/mermaid/dist/mermaid.forest.css">
+  <script>mermaid.initialize({startOnLoad:true});</script>
+  <style>
+    .edgeLabel {
+      background: initial;
+      color: white;
+    }
+  </style>
 </body>
 </html>
