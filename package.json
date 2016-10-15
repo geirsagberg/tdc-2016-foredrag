@@ -1,0 +1,16 @@
+{
+  "name": "tdc-2016-foredrag",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Geir Sagberg",
+  "license": "MIT",
+  "dependencies": {
+    "remark-bekk": "bekk/remark"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.17.3"
+  },
+  "scripts": {
+    "start": "browser-sync start --server --files index.html"
+  }
+}
