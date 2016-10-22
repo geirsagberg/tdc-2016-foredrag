@@ -297,6 +297,12 @@ class: split-50
 
 class: center middle
 
+# Demo: Gaver
+
+---
+
+class: center middle
+
 # SignalR
 
 ???
@@ -336,7 +342,46 @@ sequenceDiagram
 
 class: center middle
 
-# Demo
+# Live updates
+
+???
+
+- Endringer brukere gjør skal vises hos andre brukere
+- Fungerer med enhver klient-side teknologi med single state og enveis dataflyt
+- Sikkert også med Socket.io
+
+---
+
+# Live updates
+
+## Server
+1. Sett opp SignalR
+1. Lag en hub med server-metode for å registrere klienter
+1. Definér klient-metoder (f.eks. `Refresh()`)
+1. Kall klient-metodene når data endres
+
+## Klient
+1. Inkludér SignalR-script (evt. proxy)
+1. Lytt på klient-metoder (f.eks. `refresh()`)
+1. Registrer klient via server-metode 
+1. Last data på nytt ved endringer
+
+---
+
+class: center middle
+
+# Demo: Live updates
+
+---
+
+# Neste steg
+
+## Mer granulære oppdateringer
+
+- Sparer data
+- Krever ofte utvidelse av store
+- Flere klient-metoder
+- Mer detaljert kall
 
 ---
 
