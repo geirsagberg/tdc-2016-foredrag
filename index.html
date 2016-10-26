@@ -15,7 +15,7 @@ class: front-page
 
 # Live updates med SignalR, React og Redux
 
-## Enklere enn du tror
+## 
 
 Geir Sagberg
 
@@ -212,6 +212,39 @@ store.dispatch({
 
 ---
 
+class: center middle
+
+# Redux-Thunk
+
+---
+
+# Redux-Thunk
+
+```
+// store.js
+import { createStore, applyMiddleware } from 'redux'
+import thunk from 'redux-thunk'
+import reducer from './reducer'
+
+export const store = createStore(
+  reducer,
+  applyMiddleware(thunk)
+)
+```
+
+```
+// actions.js
+export const loadData = (wishListId) => async dispatch => {
+  const data = await getJson('/api/wishes/' + wishListId)
+  dispatch({
+    type: 'DATA_LOADED',
+    data
+  })
+}
+```
+
+---
+
 class: middle, center
 
 # react-redux
@@ -229,13 +262,15 @@ import { render } from 'react-dom'
 import { Provider, connect } from 'react-redux'
 
 import WishList from './WishList'
-import store from './store' 
+import store from './store'
+import * as actions from './actions'
 
-const mapStateToProps = state => ({
+const mapToProps = state => ({
   wishes: state.wishes
 })
 
-const App = connect(mapStateToProps)(WishList)
+const decorate = connect(mapToProps, actions)
+const App = decorate(WishList)
 
 render(
   <Provider store={store}>
@@ -368,6 +403,85 @@ class: center middle
 
 ---
 
+# Live updates - Server - Oppsett av SignalR
+
+```xml
+// NuGet.config
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="aspnetmaster"
+      value="https://dotnet.myget.org/F/aspnetcore-master/api/v3/index.json" />
+  </packageSources>
+</configuration>
+```
+
+```csharp
+// Startup.cs
+public void ConfigureServices(IServiceCollection services) {
+  services.AddSignalR(options => { options.Hubs.EnableDetailedErrors = true; });
+}
+public void Configure(IApplicationBuilder app) {
+  app.UseWebSockets();
+  app.UseSignalR();
+}
+```
+
+---
+
+# Live updates - Server - Hub og metoder
+
+```csharp
+public class ListHub : Hub<IListHubClient> {
+  public void Subscribe(int wishListId) {
+    Groups.Add(Context.ConnectionId, $"List-{wishListId}");
+  }
+}
+public interface IListHubClient {
+  void Refresh();
+}
+public class ClientNotifier
+{
+  private readonly IHubContext<ListHub, IListHubClient> hub;
+  public ClientNotifier(IConnectionManager signalRManager) {
+    hub = signalRManager.GetHubContext<ListHub, IListHubClient>();
+  }
+  public void RefreshData(int wishListId) {
+    hub.Clients.Group($"List-{wishListId}").Refresh();
+  }
+}
+```
+
+---
+
+# Live updates - Klient
+
+```bash
+$ yarn add ms-signalr-client
+```
+```
+// App.js
+import 'ms-signalr-client'
+```
+```
+// actions.js
+export function subscribeList (wishListId) { 
+  return async function (dispatch) {
+    const connection = $.hubConnection()
+    connection.logging = true
+    const listHub = connection.createHubProxy('ListHub')
+    listHub.on('refresh', () => dispatch(loadData(wishListId)))
+    await connection.start()
+    await listHub.invoke('subscribe', wishListId)
+    console.log('Subscribed to wish list: ' + wishListId)
+  }
+}
+```
+
+---
+
 class: center middle
 
 # Demo: Live updates
@@ -376,12 +490,9 @@ class: center middle
 
 # Neste steg
 
-## Mer granulære oppdateringer
-
-- Sparer data
-- Krever ofte utvidelse av store
-- Flere klient-metoder
-- Mer detaljert kall
+- Økt granularitet
+- Spare data
+- Flere kall
 
 ---
 
