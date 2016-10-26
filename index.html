@@ -126,6 +126,18 @@ class: center middle
 
 # Redux
 
+.center.appGraph[
+  .mermaid[graph LR
+    state-->reducer
+    action-->reducer
+    reducer-->newState
+  ]
+]
+
+---
+
+# Redux
+
 ```
 import { createStore } from 'redux'
 
@@ -226,20 +238,20 @@ import { createStore, applyMiddleware } from 'redux'
 import thunk from 'redux-thunk'
 import reducer from './reducer'
 
-export const store = createStore(
-  reducer,
-  applyMiddleware(thunk)
-)
+const enhancer = applyMiddleware(thunk)
+export default createStore(reducer, enhancer)
 ```
 
 ```
 // actions.js
-export const loadData = (wishListId) => async dispatch => {
-  const data = await getJson('/api/wishes/' + wishListId)
-  dispatch({
-    type: 'DATA_LOADED',
-    data
-  })
+export function loadData (wishListId) {
+  return async function (dispatch) {
+    const data = await getJson('/api/wishes/' + wishListId)
+    dispatch({
+      type: 'DATA_LOADED',
+      data
+    })
+  }
 }
 ```
 
@@ -261,12 +273,13 @@ import React from 'react'
 import { render } from 'react-dom'
 import { Provider, connect } from 'react-redux'
 
-import WishList from './WishList'
+import WishList from './components/WishList'
 import store from './store'
 import * as actions from './actions'
 
 const mapToProps = state => ({
-  wishes: state.wishes
+  wishes: state.wishes,
+  wishListId: state.wishListId
 })
 
 const decorate = connect(mapToProps, actions)
@@ -282,21 +295,21 @@ render(
 .column[
 ```
 /// WishList.js
-...
-const WishList = ({wishes, dispatch}) => (
-  <div>
-    <ul>
-      {wishes.map(wish => (
-        <Wish wish={wish} key={wish.id} />
-      ))}
-    </ul>
-    <button onClick={() => dispatch({
-      type: 'ADD_WISH',
-      wish: { id: 1, text: 'New car' }
-    })}>Add wish</button>
-  </div>
-)
-...
+class WishList extends React.Component {
+  componentDidMount () {
+    this.props.loadData(this.props.wishListId)
+  }
+  render () {
+    return (
+      <ul>
+        {this.props.wishes.map(wish => (
+          <Wish wish={wish} key={wish.id} />
+        ))}
+      </ul>
+    )
+  }
+}
+export default WishList
 ```
 ]
 
@@ -403,7 +416,7 @@ class: center middle
 
 ---
 
-# Live updates - Server - Oppsett av SignalR
+# Live updates - Server
 
 ```xml
 // NuGet.config
@@ -418,20 +431,32 @@ class: center middle
 </configuration>
 ```
 
-```csharp
-// Startup.cs
-public void ConfigureServices(IServiceCollection services) {
-  services.AddSignalR(options => { options.Hubs.EnableDetailedErrors = true; });
-}
-public void Configure(IApplicationBuilder app) {
-  app.UseWebSockets();
-  app.UseSignalR();
+```json
+// project.json
+{
+  dependencies: {
+    ...
+    "Microsoft.AspNetCore.SignalR.Server": "0.1.0",
+    "Microsoft.AspNetCore.WebSockets.Server": "0.1.0",
+  }
 }
 ```
 
 ---
 
-# Live updates - Server - Hub og metoder
+# Live updates - Server
+
+```csharp
+public class Startup {
+  public void ConfigureServices(IServiceCollection services) {
+    services.AddSignalR(options => { options.Hubs.EnableDetailedErrors = true; });
+  }
+  public void Configure(IApplicationBuilder app) {
+    app.UseWebSockets();
+    app.UseSignalR();
+  }
+}
+```
 
 ```csharp
 public class ListHub : Hub<IListHubClient> {
@@ -442,12 +467,20 @@ public class ListHub : Hub<IListHubClient> {
 public interface IListHubClient {
   void Refresh();
 }
-public class ClientNotifier
-{
+```
+
+---
+
+# Live updates - Server
+
+```csharp
+public class ClientNotifier {
   private readonly IHubContext<ListHub, IListHubClient> hub;
+
   public ClientNotifier(IConnectionManager signalRManager) {
     hub = signalRManager.GetHubContext<ListHub, IListHubClient>();
   }
+
   public void RefreshData(int wishListId) {
     hub.Clients.Group($"List-{wishListId}").Refresh();
   }
